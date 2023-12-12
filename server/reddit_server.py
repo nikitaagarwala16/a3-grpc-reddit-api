@@ -215,8 +215,6 @@ class RedditServiceServicer(reddit_pb2_grpc.RedditServiceServicer):
         conn.close()
         return response
         
-
-
 def serve(port):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     reddit_pb2_grpc.add_RedditServiceServicer_to_server(RedditServiceServicer(), server)

@@ -7,6 +7,12 @@ import reddit_pb2_grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 import datetime
 
+# accepts connection parameters(host/port) on instantiation
+def __init__(self, host='localhost', port=50051):
+        self.channel = grpc.insecure_channel(f'{host}:{port}')
+        self.stub = reddit_pb2_grpc.RedditServiceStub(self.channel)
+
+# client side code for creating a post
 def create_post(stub, author_id, title, content,subreddit_id,publication_date,attached_video_url=None,attached_image_url=None):
     # CreatePostRequest
     post_request = reddit_pb2.CreatePostRequest(
@@ -17,26 +23,28 @@ def create_post(stub, author_id, title, content,subreddit_id,publication_date,at
         publication_date = publication_date
     )
 
+    # checking what kind of media link is attached in the post
     if attached_video_url is not None:
         post_request.video_url = attached_video_url
     elif attached_image_url is not None:
         post_request.image_url = attached_image_url
 
-    # Send the request to the server and get the response
+
     response = stub.CreatePost(post_request)
     return response
 
+# client side code for upvote or downvote on a post
 def vote_on_post(stub, post_id, upvote):
     # Create a VoteOnPostRequest
     request = reddit_pb2.VoteOnPostRequest(
         post=reddit_pb2.Post(id=post_id), 
         upvote=upvote)
 
-    # Send the request to the server and get the response
     response = stub.VoteOnPost(request)
 
     return response
 
+# client side code for retrieving a post
 def retrieve_post(stub,post_id):
     # Create a RetrievePostRequest
     request = reddit_pb2.RetrivePostRequest(post_id=post_id)
@@ -49,6 +57,7 @@ def retrieve_post(stub,post_id):
         else:
             print("Post with the given POST ID not found")
 
+# client side code for creating a comment
 def create_comment(stub, author_id, content, post_id=None, comment_id=None):
     # Create a User message for the author
     author = reddit_pb2.User(id=author_id)
@@ -57,33 +66,34 @@ def create_comment(stub, author_id, content, post_id=None, comment_id=None):
     current_time = Timestamp()
     current_time.FromDatetime(datetime.datetime.now())
 
-    # Create a CreateCommentRequest
     comment_request = reddit_pb2.CreateCommentRequest(
         author=author,
         content=content,
         publication_date=current_time
     )
 
-    # Set the appropriate attached_to field based on whether it's a post or a comment
+    # Setting the appropriate attached_to field based on whether it's a post or a comment
     if post_id is not None:
         comment_request.post_attached_to_id = post_id
     elif comment_id is not None:
         comment_request.comment_attached_to_id = comment_id
 
-    # Send the request to the server and get the response
+ 
     response = stub.CreateComment(comment_request)
     return response
+
+# client side code for voting on a comment
 def vote_on_comment(stub, com_id, upvote):
     # Create a VoteOnPostRequest
     request = reddit_pb2.VoteOnCommentRequest(
         comment_id=com_id, 
         upvote=upvote)
 
-    # Send the request to the server and get the response
     response = stub.VoteOnComment(request)
 
     return response
 
+# client side code for retrieving most upvote comment on a post 
 def retrieve_most_upvoted_comments_on_a_post(stub ,post_id,n):
     request = reddit_pb2.GetMostUpvotedCommentsOnPostRequest(
         post_id = post_id,
@@ -91,6 +101,8 @@ def retrieve_most_upvoted_comments_on_a_post(stub ,post_id,n):
     )
     response = stub.GetMostUpvotedCommentsOnPost(request)
     return response
+
+# client side code for retrieving most upvote comment on a comment
 def retrieve_most_upvoted_comments_on_a_comment(stub ,comment_id,n):
     request = reddit_pb2.GetMostUpvotedCommentsOnCommentRequest (
         comment_id = comment_id,
@@ -99,6 +111,7 @@ def retrieve_most_upvoted_comments_on_a_comment(stub ,comment_id,n):
     response = stub.GetMostUpvotedCommentsOnComment(request)
     return response
 
+# had used this function for manual testing, you can ignore this
 def run():
     # Assuming the server is running on localhost and port 50051
     with grpc.insecure_channel('localhost:50051') as channel:
