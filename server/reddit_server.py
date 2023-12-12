@@ -227,6 +227,7 @@ def serve(port):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='gRPC Reddit-like API Server')
+    # configurable port, by default it will start on port 50051 
     parser.add_argument('--port', type=int, default=50051, help='The port on which to run the server')
     args = parser.parse_args()
     serve(args.port)
