@@ -1,0 +1,167 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+package redditapi;
+
+enum PostState {
+    POST_STATE_NORMAL = 0;
+    POST_STATE_LOCKED = 1;
+    POST_STATE_HIDDEN = 2;
+}
+
+enum CommentState {
+    COMMENT_STATE_NORMAL = 0;
+    COMMENT_STATE_HIDDEN = 1;
+}
+
+enum SubredditVisibility {
+    SUBREDDIT_VISIBILITY_PUBLIC = 0;
+    SUBREDDIT_VISIBILITY_PRIVATE = 1;
+    SUBREDDIT_VISIBILITY_HIDDEN = 2; 
+}
+
+message User {
+    optional int32 id = 1;
+}
+
+message Post {
+    optional int32 id = 1;
+    optional User author = 2;
+    optional string title = 3;
+    optional string content = 4;
+    oneof medialink {
+        string video_url = 5;
+        string image_url = 6;
+    }
+    optional sint32 score = 7;
+    optional PostState post_state = 8;
+    optional google.protobuf.Timestamp publication_date = 9;
+    optional Subreddit subreddit_attached_to = 10;
+}
+
+message Comment {
+    optional int32 id = 1;
+    optional User author = 2;
+    optional sint32 score = 3;
+    optional CommentState comment_state = 4;
+    optional google.protobuf.Timestamp publication_date = 5;
+    oneof attached_to {
+        Comment comment_attached_to = 6;
+        Post post_attached_to = 7;
+    }
+    optional string content = 8;
+
+}
+
+message Subreddit {
+    optional int32 id = 1;
+    optional string name = 2;
+    optional SubredditVisibility subreddit_visibilty = 3;
+    repeated string tags = 4;
+}
+
+message CreatePostRequest {
+    optional User author = 1;
+    optional string title = 2;
+    optional string content = 3;
+    oneof medialink {
+        string video_url = 4;
+        string image_url = 5;
+    }  
+    optional Subreddit subreddit_attached_to = 6;
+    optional google.protobuf.Timestamp publication_date = 7;
+    
+}
+
+message CreatePostResponse {
+    optional Post post = 1;
+}
+
+message VoteOnPostRequest {
+    optional Post post = 1;
+    optional bool upvote = 2;
+}
+
+message VoteOnPostResponse {
+    optional Post post = 1;
+}
+
+message RetrivePostRequest {
+    optional int32 post_id = 1;
+}
+
+message RetrievePostResponse {
+    optional Post post = 1;
+}
+
+message CreateCommentRequest {
+    optional User author = 1;
+     oneof attached_to {
+        int32 comment_attached_to_id = 2;
+        int32 post_attached_to_id = 3;
+    }
+    optional string content = 4;
+    optional google.protobuf.Timestamp publication_date = 5;
+}
+
+message CreateCommentResponse {
+    Comment comment = 1;
+}
+
+message VoteOnCommentRequest {
+    optional int32 comment_id = 1;
+    bool upvote = 2;
+}
+
+message VoteOnCommentResponse {
+    optional int32 updated_score = 1;
+}
+message GetMostUpvotedCommentsOnPostRequest {
+    optional int32 post_id = 1;
+    int32 n = 2;
+}
+message CommentHasReplies {
+    Comment comment = 1;
+    bool has_replies = 2;
+}
+message GetMostUpvotedCommentsOnPostResponse {
+    repeated CommentHasReplies comments = 1;
+}
+message GetMostUpvotedCommentsOnCommentRequest {
+    optional int32 comment_id = 1;
+    int32 n = 2;
+}
+message CommentWithReplies{
+    Comment comment = 1;
+    repeated Comment replies = 2;
+}
+message GetMostUpvotedCommentsOnCommentResponse {
+    repeated CommentWithReplies comment = 1;
+}
+message MonitorPostRequest {
+    int32 post_id = 1;
+    repeated int32 comment_id = 2;
+}
+message MonitorPostResponse {
+    int32 post_score = 1;
+    repeated int32 comment_score = 2;
+}
+
+service RedditService {
+
+    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse);
+
+    rpc VoteOnPost(VoteOnPostRequest) returns (VoteOnPostResponse);
+
+    rpc RetrievePost(RetrivePostRequest) returns (RetrievePostResponse);
+
+    rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse);
+
+    rpc VoteOnComment(VoteOnCommentRequest) returns (VoteOnCommentResponse);
+
+    rpc GetMostUpvotedCommentsOnPost(GetMostUpvotedCommentsOnPostRequest) returns (GetMostUpvotedCommentsOnPostResponse);
+
+    rpc GetMostUpvotedCommentsOnComment(GetMostUpvotedCommentsOnCommentRequest) returns (GetMostUpvotedCommentsOnCommentResponse);
+
+    rpc MonitorPost(MonitorPostRequest) returns (MonitorPostResponse);
+}
